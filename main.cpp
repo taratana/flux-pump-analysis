@@ -1,7 +1,16 @@
-#define _CRT_SECURE_NO_WARNINGS
-#include<iostream>
-#include"circuit.h"
+/*
+	This program is for analysis of flux pump using pancake coil.
+	In addition, self of mutual inductance, contact resistance, etc. are all reasonably calculated.
+	This program is made by Mato in 2019.
+*/
 
+#define _CRT_SECURE_NO_WARNINGS
+#pragma once
+#include"circuit.h"
+#include <Eigen/Dense>
+#include "GMRES.h"
+#include "Inductance.h"
+using namespace Eigen;
 using namespace std;
 
 class StopWatch {
@@ -28,30 +37,33 @@ int main() {
 	StopWatch record_time;
 	record_time.start();
 
-	circuit c;
 
-	//below is for parmeter changing analysis
-	//double r_dyn;
-	//for(int i =0;i<5;i++){
-	//	if (i == 0)
-	//		r_dyn = 10e-6;
-	//	else if (i == 1)
-	//		r_dyn = 50e-6;
-	//	else if (i == 2)
-	//		r_dyn = 100e-6;
-	//	else if (i == 3)
-	//		r_dyn = 500e-6;
-	//	else if (i == 4)
-	//		r_dyn = 1000e-6;
+	//int n = 5;
+	//VectorXd x = VectorXd::Zero(n);
+	//x << 100,100,100,100,100;
+	//VectorXd b(n);
+	//b << -53,1,29,22,-5;
 
-	//	char output_name[20];
-	//	sprintf(output_name, "with-filter-rdyn-%d.csv",i+1);
-	//	c.setRdyn(r_dyn);
-	//	c.CalcFilterExistCircuit(output_name);
+	//MatrixXd A(n, n);
+	//A << 1, -2, 3, 4, -5,
+	//	1, 1, 1, 1, 1,
+	//	1, -2, 3, -4, 5,
+	//	2, -1, -3, -2, 1,
+	//	-1, -1, 1, 1, 1;
+
+
+	//x = GMRES(A, b, x, 1e-9, 100, 10);
+
+	//for (int i = 0; i < n; i++) {
+	//	cout << x(i) << endl;
 	//}
+	//while (1);
 
-	c.CalcFilterExistCircuit("with-filter.csv");
-	c.CalcNoFilterCircuit("without-filter.csv");
+	Inductance inductance;
+	inductance.sc1->setCoilParameter(0.0875, 0.1125, -0.0425, -0.0175, 200);
+	inductance.sc2->setCoilParameter(0.0875, 0.1125, 0.0175, 0.0425, 200);
+	cout << inductance.M()*1000 << endl;
+	
 
 
 	record_time.stop();
