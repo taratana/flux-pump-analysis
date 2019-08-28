@@ -2,7 +2,7 @@
 [How to use this program]
 This program calculate self or mutual inductance.
 Calculation only needs the shape of coils,
-which is inner radius, outer radius, top coordinate, bottom coordinate.
+which are inner radius, outer radius, top coordinate, bottom coordinate, number of turns.
 Below is example of code:
 	Inductance inductance;
 	inductance.sc1->setCoilParameter(0.0875, 0.1125, -0.0425, -0.0175, 200);
@@ -19,17 +19,15 @@ This program is made by Kurauchi and modified by Mato in 2019.
 
 #pragma once
 #define _USE_MATH_DEFINES
+#include "headings.h"
 #include <cmath>
 #include "GaussLegendreQuadrature.h"
-#include "headings.h"
-#include<Eigen/Dense>
+#include "Eigen/Dense"
 
 
 static const int N0 = 500;
 static const int NR = 500;
 static const int NZ = 500;
-static const double REBCO_WIDTH = 4e-3;
-static const double INSULATOR_WIDTH = 1e-3;
 static const int GAUSS_POINTS_NUMBER = 20;
 
 
@@ -43,7 +41,7 @@ private:
 		double a1, a2, z1, z2;
 		double J;
 		double Rp, Zp;
-		double n0, nr, nz;
+		int n0, nr, nz;
 		int number_of_turn;
 		Rosetta::GaussLegendreQuadrature<GAUSS_POINTS_NUMBER> gaussIntegration;
 

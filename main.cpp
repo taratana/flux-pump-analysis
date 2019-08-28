@@ -5,10 +5,7 @@
 */
 
 #define _CRT_SECURE_NO_WARNINGS
-#pragma once
-#include"circuit.h"
-#include <Eigen/Dense>
-#include "GMRES.h"
+#include"Circuit.h"
 #include "Inductance.h"
 using namespace Eigen;
 using namespace std;
@@ -38,36 +35,81 @@ int main() {
 	record_time.start();
 
 
-	//int n = 5;
-	//VectorXd x = VectorXd::Zero(n);
-	//x << 100,100,100,100,100;
-	//VectorXd b(n);
-	//b << -53,1,29,22,-5;
+	//Inductance inductance;
+	//inductance.sc1->setCoilParameter(0.0875, 0.1125, -0.0425, -0.0175, 200);
+	//inductance.sc2->setCoilParameter(0.0875, 0.1125, 0.0175, 0.0425, 200);
+	//cout << inductance.M() << endl;
+	//MatrixXd M_mat(NOP, NOP);
+	//inductance.CalcInductance(M_mat);
 
-	//MatrixXd A(n, n);
-	//A << 1, -2, 3, 4, -5,
-	//	1, 1, 1, 1, 1,
-	//	1, -2, 3, -4, 5,
-	//	2, -1, -3, -2, 1,
-	//	-1, -1, 1, 1, 1;
+	//Circuit *circuit;
+	//circuit.CalcM_ij();
+	//circuit.CalcC(0, 1);
 
-
-	//x = GMRES(A, b, x, 1e-9, 100, 10);
-
-	//for (int i = 0; i < n; i++) {
-	//	cout << x(i) << endl;
+	//for (int i = 1; i <= 1; i++) {
+	//	circuit = new Circuit();
+	//	circuit->setNOP(i);
+	//	circuit->CalcCircuit("NOP"+to_string(i));
+	//	delete circuit;
 	//}
-	//while (1);
 
-	Inductance inductance;
-	inductance.sc1->setCoilParameter(0.0875, 0.1125, -0.0425, -0.0175, 200);
-	inductance.sc2->setCoilParameter(0.0875, 0.1125, 0.0175, 0.0425, 200);
-	cout << inductance.M()*1000 << endl;
-	
+
+	static const int N = 200+1;
+	Circuit *circuit[N];
+	char filename[100];
+	double conv_info[N][3];
+	double filter_initial = 0.8e-6;//  0.0004955;
+	double filter_final = 3.0e-1;
+	double log_space_factor = pow(filter_final / filter_initial, 1.0 / (N - 1));
+	for(int j=12;j<=12;j++){
+#pragma omp parallel for schedule (guided,1)
+		for (int i = 0; i < N; i++) {
+			sprintf(filename, "ExpData/09/%02d/Data%d", j, i);
+			circuit[i] = new Circuit();
+			circuit[i]->setNOP(j);
+			if (i == 0) {
+				conv_info[i][0] = 0;
+			} else {
+				conv_info[i][0] = filter_initial*pow(log_space_factor, i-1);
+
+			}
+			circuit[i]->setFilterInductance(conv_info[i][0]);
+			circuit[i]->CalcCircuit(filename);
+			circuit[i]->getConvergenceInfo(&conv_info[i][1], &conv_info[i][2]);
+			delete circuit[i];
+			cout << "Circuit" << i << " Finished." << endl;
+		}
+		sprintf(filename, "ExpData/09/%02d/conv-Lf.csv", j);
+		ofstream output_Lf(filename);
+		for (int i = 0; i < N; i++)
+			output_Lf << conv_info[i][0] << "," << conv_info[i][1] << "," << conv_info[i][2] << endl;
+		output_Lf.close();
+	}
+
+
+//	static const int N = 1;
+//	Circuit *circuit[N];
+
+//	double conv_info[N][3];
+//#pragma omp parallel for schedule (dynamic,1)
+//	for (int i = 0; i < N; i++) {
+//		circuit[i] = new Circuit();
+//		conv_info[i][0] = 0;
+//		//circuit[i]->setR_dyn(conv_info[i][0]);
+//		circuit[i]->setFilterInductance(conv_info[i][0]);
+//		circuit[i]->CalcCircuitWithoutfilter("ExpData/01/Data" + to_string(i + 1));
+//		circuit[i]->getConvergenceInfo(&conv_info[i][1], &conv_info[i][2]);
+//		delete circuit[i];
+//		cout << "Circuit" << i << " Finished." << endl;
+//	}
+//	ofstream output_Lf("ExpData/01/conv-Lf.csv");
+//	for (int i = 0; i < N; i++)
+//		output_Lf << conv_info[i][0] << "," << conv_info[i][1] << "," << conv_info[i][2] << endl;
+//	output_Lf.close();
 
 
 	record_time.stop();
 	double elapsed = record_time.getTime();
 	cout << "Time Elapsed:" << endl << (int)elapsed / 3600 << "hrs " << ((int)elapsed % 3600) / 60.0 << "min" << endl;
-	
+
 }

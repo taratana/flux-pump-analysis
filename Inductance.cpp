@@ -55,7 +55,7 @@ double Inductance::SingleCoil::Hr2(double a, double z){
 	else if (Rp > a) {
 		return Hr2_2(a, z);
 	}
-	else if (Rp == a) {
+	else if(Rp == a){
 		return Hr2_1(a, z);
 	}
 }
@@ -98,7 +98,7 @@ double Inductance::SingleCoil::Hr2_3(double a, double z) {
 double Inductance::SingleCoil::Hz1(double a, double z) {
 	if (Zp != z) {
 		return Hz1_2(a, z);
-	} else if (Zp == z) {
+	} else if(Zp == z){
 		return Hz1_1(a, z);
 	}
 }
@@ -121,7 +121,7 @@ double Inductance::SingleCoil::Hz2(double a, double z) {
 		return Hz2_1(a, z);
 	} else if (Rp == a) {
 		return Hz2_2(a, z);
-	} else if (Rp != a) {
+	} else if(Rp != a){
 		return Hz2_3(a, z);
 	}
 }
@@ -199,22 +199,19 @@ Inductance::Inductance() {
 	sc2 = new SingleCoil();
 }
 
-//
+
 void Inductance::CalcInductance(Eigen::MatrixXd & M) {
-	//for (int j = 0; j < NOP; j++) {
-	//	sc1->setCoilParameter()
-
-
-	//	for (int i = 0; i < NOP; i++) {
-
-
-	//		M(i,j)
+	//int i, j;
+	//double r_w = REBCO_WIDTH;
+	//double i_w = INSULATOR_WIDTH;
+	//for (j = 0; j < M.rows(); j++) {
+	//	sc1->setCoilParameter(INNNER_DIAMETER / 2, OUTER_DIAMETER / 2, r_w*j + i_w * j, r_w*(j + 1) + i_w * j, NUMBER_OF_TURN);
+	//	for (i = 0; i < M.cols(); i++) {
+	//		sc2->setCoilParameter(INNNER_DIAMETER / 2, OUTER_DIAMETER / 2, r_w*i + i_w * i, r_w*(i + 1) + i_w * i, NUMBER_OF_TURN);
+	//		M(i, j) = this->M();
 	//	}
+	//	std::cout << "coil" << j+1 << " done." << std::endl;
 	//}
-
-
-
-
 }
 
 
@@ -222,26 +219,25 @@ void Inductance::CalcInductance(Eigen::MatrixXd & M) {
 
 
 double Inductance::M() {
-	double temp = 0.0;
-	
-	for (int h = 1; h <= sc2->nz; h++) {
-		double temp1 = 0.0;
-#pragma omp for private(h) reduction (+:temp1)
-		for (int i = 1; i <= sc2->n0; i++) {
+	int h, i, j;
+	double temp = 0, temp1, temp2;
+
+	for (h = 1; h <= sc2->nz; h++) {
+		temp1 = 0.0;
+		for (i = 1; i <= sc2->n0; i++) {
 			temp1 += ri(i) * sc1->Bz(ri(i), zh(h));;
 		}
-		temp1 *= sc2->a1 / sc2->n0;
+		temp1 *= sc2-> a1 / sc2->n0;
 
 
-		double temp2 = 0.0;
-#pragma omp for private(h) reduction (+:temp2)
-		for (int j = 1; j <= sc2->nr; j++) {
+		temp2 = 0.0;
+		for (j = 1; j <= sc2->nr; j++) {
 			temp2 += rj(j) * (sc2->a2 - rj(j)) * sc1->Bz(rj(j), zh(h));
 		}
-		temp2 *= 1 / sc2->nr;
+		temp2 *= 1.0 / sc2->nr;
 
 		temp += temp1 + temp2;
-		std::cout << h << std::endl;
+		//std::cout << h << std::endl;
 	}
 	temp *= 2 * M_PI * sc2->number_of_turn / sc2->nz;
 
@@ -249,13 +245,13 @@ double Inductance::M() {
 }
 
 double Inductance::ri(int i) {
-	return (2.0 * i - 1) * sc2->a1 / (2 * sc2->n0);
+	return (2.0 * i - 1) * sc2->a1 / (2.0 * sc2->n0);
 }
 
 double Inductance::rj(int j) {
-	return sc2->a1 + (2.0 * j - 1) * (sc2->a2 - sc2->a1) / (2 * sc2->nr);
+	return sc2->a1 + (2.0 * j - 1) * (sc2->a2 - sc2->a1) / (2.0 * sc2->nr);
 }
 
 double Inductance::zh(int h) {
-	return sc2->z1 + (2.0 * h - 1) * (sc2->z2 - sc2->z1) / (2 * sc2->nz);
+	return sc2->z1 + (2.0 * h - 1) * (sc2->z2 - sc2->z1) / (2.0 * sc2->nz);
 }
